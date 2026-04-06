@@ -1,16 +1,34 @@
--- =============================================================================
--- M4 工作坊：表结构请按 spec/10-数据模型与存储规格.md 定稿后在此编写。
--- 当前文件可为「仅注释」——表示 intentionally 不创建业务表，迫使小组先对齐契约。
--- =============================================================================
--- 提示（删除本注释块前请阅读）：
---   - 至少需覆盖：渠道配置、规则、投递记录（名称以定稿 spec 为准）
---   - 与 spec/09 中 DTO 字段一一可对齐，避免返工
--- =============================================================================
+-- M4 工作坊：notify_channel_configs + notify_rules（对齐 spec/09 DTO）
 
--- 示例（保持注释状态，由学员取消注释并调整）：
--- CREATE TABLE IF NOT EXISTS notify_rules (
---   id TEXT PRIMARY KEY,
---   name TEXT NOT NULL,
---   enabled INTEGER NOT NULL DEFAULT 1,
---   created_at TEXT NOT NULL
--- );
+CREATE TABLE IF NOT EXISTS notify_channel_configs (
+  channel_id TEXT PRIMARY KEY,
+  channel_type TEXT NOT NULL DEFAULT 'dingtalk',
+  enabled INTEGER NOT NULL DEFAULT 1,
+  secret_ref TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS notify_rules (
+  rule_id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  enabled INTEGER NOT NULL DEFAULT 1,
+  trigger_type TEXT NOT NULL DEFAULT 'manual',
+  schedule_cron TEXT,
+  condition_json TEXT NOT NULL DEFAULT '{}',
+  template_id TEXT,
+  channel_ids_json TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+-- 演示用：一条已启用渠道，供规则 channelIds 引用（与 spec/09 示例 UUID 一致）
+INSERT OR IGNORE INTO notify_channel_configs (channel_id, channel_type, enabled, secret_ref, created_at, updated_at)
+VALUES (
+  '550e8400-e29b-41d4-a716-446655440000',
+  'dingtalk',
+  1,
+  'sandbox-ref-demo',
+  '2026-04-06T00:00:00+00:00',
+  '2026-04-06T00:00:00+00:00'
+);

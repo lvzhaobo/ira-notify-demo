@@ -3,7 +3,7 @@ import { fetchHealth, fetchRules } from "../api";
 
 export default function RulesPage() {
   const [health, setHealth] = useState(null);
-  const [stub, setStub] = useState(null);
+  const [rulesPayload, setRulesPayload] = useState(null);
   const [err, setErr] = useState(null);
 
   useEffect(() => {
@@ -16,15 +16,10 @@ export default function RulesPage() {
         if (!cancelled) setErr(e.response?.data || { message: e.message });
       }
       try {
-        const r = await fetchRules();
-        if (!cancelled) setStub(r.data);
+        const { data } = await fetchRules({ limit: 20 });
+        if (!cancelled) setRulesPayload(data);
       } catch (e) {
-        if (cancelled) return;
-        if (e.response?.status === 501) {
-          setStub(e.response.data);
-        } else {
-          setErr(e.response?.data || { message: e.message });
-        }
+        if (!cancelled) setErr(e.response?.data || { message: e.message });
       }
     })();
     return () => {
@@ -32,21 +27,33 @@ export default function RulesPage() {
     };
   }, []);
 
+  const items = rulesPayload?.items ?? [];
+  const listOk = rulesPayload && Array.isArray(items);
+
   return (
     <div>
       <h2 style={{ marginTop: 0 }}>US-M4-001 · 规则 CRUD</h2>
       <p style={{ color: "#5e6c84", fontSize: "0.9rem" }}>
-        工作坊骨架：下方「健康检查」应成功；列表接口在实现前为 <strong>501 stub</strong>。
+        健康检查应成功；列表接口应对齐 <code>spec/09</code>（<code>items / nextCursor / hasMore</code>）。
       </p>
       <section style={{ background: "#fff", border: "1px solid #dfe1e6", borderRadius: 4, padding: "0.75rem 1rem", marginBottom: "1rem" }}>
         <div style={{ fontSize: "0.75rem", color: "#5e6c84" }}>GET /api/v1/notify/health</div>
         <pre style={{ margin: "0.5rem 0 0", fontSize: "0.8rem", overflow: "auto" }}>{JSON.stringify(health, null, 2)}</pre>
       </section>
       <section style={{ background: "#fff", border: "1px solid #dfe1e6", borderRadius: 4, padding: "0.75rem 1rem" }}>
-        <div style={{ fontSize: "0.75rem", color: "#5e6c84" }}>GET /api/v1/notify/rules（预期 501，直至后端实现）</div>
+        <div style={{ fontSize: "0.75rem", color: "#5e6c84" }}>GET /api/v1/notify/rules</div>
         <pre style={{ margin: "0.5rem 0 0", fontSize: "0.8rem", overflow: "auto" }}>
-          {stub ? JSON.stringify(stub, null, 2) : err ? JSON.stringify(err, null, 2) : "加载中…"}
+          {err
+            ? JSON.stringify(err, null, 2)
+            : listOk
+              ? JSON.stringify(rulesPayload, null, 2)
+              : "加载中…"}
         </pre>
+        {listOk && (
+          <p style={{ margin: "0.75rem 0 0", fontSize: "0.85rem", color: "#5e6c84" }}>
+            当前共 <strong>{items.length}</strong> 条规则（演示页仅展示 JSON，完整表单可在后续迭代补充）。
+          </p>
+        )}
       </section>
     </div>
   );
